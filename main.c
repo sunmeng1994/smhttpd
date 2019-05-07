@@ -15,6 +15,36 @@
 int startup(int*port);
 int error_die(const char*sc);
 void*accept_request(void*from_client);
+int get_line(int sock,char*buf,int size);
+
+//读一行http报文
+int get_line(int sock,char*buf,int size)
+{
+    int i=0;
+    char c='\0';
+    int n;
+    while((i<size-1)&&(c!='\n'))
+    {
+	n=read(sock,&n,1);
+	if(n>0)
+	{
+	    if(c=='\r')
+	    {
+		n=read(sock,&c,1);
+		if((n>0)&&(c=='\n'))
+		    read(sock,&c,1);
+		else
+		    c='\n';
+	    }
+	    buf[i]=c;
+	    i++;
+	}
+	else
+	    c='\n' 
+    }
+    buf[i]='\0';
+    return i;
+}
 
 //接收客户端的连接
 void*accept_request(void*from_client)
