@@ -212,7 +212,7 @@ void*accept_request(void*from_client)
     i=0;
     while(ISspace(buf[j])&&(j<sizeof(buf)))
 	j++;
-    while(!ISspace(buf[j])&&i<sizeof(url)-1&&j<numchars)
+    while(!ISspace(buf[j])&&i<sizeof(url)-1&&j<sizeof(buf))
     {
 	url[i]=buf[j];
 	i++;j++;
@@ -254,6 +254,7 @@ void*accept_request(void*from_client)
 	    execute_cgi(client,path,method,query_string);
     }
     close(client);
+    return NULL;
 }
 
 void *accept_request_test(void*from_client)
