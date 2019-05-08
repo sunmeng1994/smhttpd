@@ -12,11 +12,143 @@
 #include<sys/wait.h>
 #include<stdlib.h>
 
+#define ISspace(x) isspace((int)(x)) 
+#define SERVER_STRING "Server:smhttpd/0.1.0\r\n"
 int startup(int*port);
 int error_die(const char*sc);
 void*accept_request(void*from_client);
 int get_line(int sock,char*buf,int size);
+void unimplemented(int client);
+void cannot_execute(int client);
+void not_found(int);//发送404
+void serve_file(int client,const char*filename);
+void headers(int client,const char *filename);
+void cat(int client,FILE*resource);
+void execute_cgi(int client,const char*path,const char*methond,const char*query_string);
+void execute_cgi(int client,const char*path,const char*methond,const char*query_string)
+{
+}
+void cat(int client,FILE*resource)
+{
+    char buf[1024];
+    fgets(buf,sizeof(buf),resource);
+    while(!feof(resource))
+    {
+	send(client,buf,strlen(buf),0);
+	fgets(buf,sizeof(buf),resource);
+    }
+}
+void headers(int client,const char *filename)
+{
+    char buf[1024];
+    strcpy(buf,"HTTP/1.0 200 OK\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    strcpy(buf,"SERVER_STRING");
+    send(client,buf,strlen(buf),0);
+    
+    strcpy(buf,"Content-Type:text/html\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    strcpy(buf,"\r\n");
+    send(client,buf,strlen(buf),0);
+    
+}
+void serve_file(int client,const char*filename)
+{
+    FILE*resource =NULL;
+    int numchars=1;
+    char buf[1024];
+    buf[0]='A';buf[1]='\0';
+    while((numchars>0)&&strcmp("\n",buf));
+	numchars=get_line(client,buf,sizeof(buf));
+    resource=fopen(filename,"r");
+    if(resource==NULL)
+	not_found(client);
+    else{
+	headers(client,filename);
+	cat(client,resource);
+    }
+    fclose(resource);
+}
 
+void not_found(int client)
+{
+    char buf[1024];
+    sprintf(buf,"HTTP/1.0 404 NOT FOUND\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,SERVER_STRING);
+    send(client,buf,strlen(buf),0);
+
+    sprintf(buf,"Content-Type:text/html\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"<HTML><TITLE>not found</TITLE>\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"<BODY><P>the server cound not fulfill\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"your request because the resource specified\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"is unavailable or nonexitstend.\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"</BODY></HTML>\r\n");
+    send(client,buf,strlen(buf),0);
+}
+
+void cannot_execute(int client)
+{
+    char buf[1024];
+    sprintf(buf,"http/1.0 500 internal server error\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"Content-type:txt/html\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"<P>Error prohibited CGI execution.\r\n");
+    send(client,buf,strlen(buf),0);
+}
+
+void unimplemented(int client)
+{
+    //发送501说明除了post和get外，其他方法没有实现
+    char buf[1024];
+    
+    sprintf(buf,"HTTP/1.0 501 Method Not implemented\r\n");
+    send(client,buf,strlen(buf),0);   
+    
+    sprintf(buf,SERVER_STRING);
+    send(client,buf,strlen(buf),0);   
+    
+    sprintf(buf,"Content-Type:test/html\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"<HTML><HEAD><TITLE>Method not Implemented\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"</TITLE></HEAD>\r\n");
+    send(client,buf,strlen(buf),0);
+    
+    sprintf(buf,"<BODY><P>http request method not supported.\r\n");
+    send(client,buf,strlen(buf),0); 
+    
+    sprintf(buf,"</BODY></HTML>\r\n");
+    send(client,buf,strlen(buf),0); 
+       
+}
 //读一行http报文
 int get_line(int sock,char*buf,int size)
 {
@@ -40,7 +172,7 @@ int get_line(int sock,char*buf,int size)
 	    i++;
 	}
 	else
-	    c='\n' 
+	    c='\n'; 
     }
     buf[i]='\0';
     return i;
@@ -56,7 +188,72 @@ void*accept_request(void*from_client)
     char url[255];
     char path[512];
     size_t i,j;
-    //struct stat
+    struct stat st;
+    int cgi=0;
+    char*query_string=NULL;
+    numchars=get_line(client,buf,sizeof(buf));
+    i=0;
+    j=0;
+    while(!ISspace(buf[i])&&(i<sizeof(method)-1))
+    {
+	method[i]=buf[i];
+	i++;
+    }
+    j=i;
+    method[i]='\0';
+    //strcasecmp 忽略大小写比较，相同返回0
+    if(strcasecmp(method,"GET")&&strcasecmp(method,"POST"))
+    {
+	unimplemented(client);
+	return NULL;
+    }
+    if(strcasecmp(method,"post")==0)
+	cgi=1;
+    i=0;
+    while(ISspace(buf[j])&&(j<numchars))
+	j++;
+    while(!ISspace(buf[j])&&i<sizeof(url)-1&&j<numchars)
+    {
+	url[i]=buf[j];
+	i++;j++;
+    }
+    url[i]='\0';	
+    if(strcasecmp(method,"GET")==0)
+    {
+	query_string=url;
+	while((*query_string!='?')&&(*query_string!='\0'))
+	    query_string++;
+	if(*query_string=='?')
+	{
+	    cgi=1;
+	    *query_string='\0';
+	    query_string++;
+	}
+    }
+
+    sprintf(path,"htdocs%s",url);
+    if(path[strlen(path)-1]=='/')
+	strcat(path,"index.html");
+    if(stat(path,&st)==-1)
+    {
+	while(numchars>0&&strcmp("\n",buf))
+	    numchars=get_line(client,buf,sizeof(buf));
+	not_found(client);
+    }
+    else
+    {
+	if((st.st_mode&S_IFMT)==S_IFDIR)
+	    strcat(path,"/index.html");
+	if((st.st_mode&S_IXUSR)||
+	    (st.st_mode&S_IXGRP)||
+	    (st.st_mode&S_IXOTH))
+	    cgi=1;
+	if(!cgi)
+	    serve_file(client,path);
+	else
+	    execute_cgi(client,path,method,query_string);
+    }
+    close(client);
 }
 
 void *accept_request_test(void*from_client)
@@ -121,7 +318,7 @@ int main()
 	client_sock=accept(server_sock,(struct sockaddr*)&client_name,&client_name_len);
 	if(client_sock==-1)
 	    error_die("accpet");
-	if(pthread_create(&newthread,NULL,accept_request_test,(void*)&client_sock)!=0)
+	if(pthread_create(&newthread,NULL,accept_request,(void*)&client_sock)!=0)
 	    perror("pthread_create");	
     }
     return 0;
