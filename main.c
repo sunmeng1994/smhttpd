@@ -157,14 +157,14 @@ int get_line(int sock,char*buf,int size)
     int n;
     while((i<size-1)&&(c!='\n'))
     {
-	n=read(sock,&n,1);
+	n=recv(sock,&c,1,0);
 	if(n>0)
 	{
 	    if(c=='\r')
 	    {
-		n=read(sock,&c,1);
+		n=recv(sock,&c,1,MSG_PEEK);
 		if((n>0)&&(c=='\n'))
-		    read(sock,&c,1);
+		    recv(sock,&c,1,0);
 		else
 		    c='\n';
 	    }
@@ -210,7 +210,7 @@ void*accept_request(void*from_client)
     if(strcasecmp(method,"post")==0)
 	cgi=1;
     i=0;
-    while(ISspace(buf[j])&&(j<numchars))
+    while(ISspace(buf[j])&&(j<sizeof(buf)))
 	j++;
     while(!ISspace(buf[j])&&i<sizeof(url)-1&&j<numchars)
     {
