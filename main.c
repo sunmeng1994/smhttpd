@@ -34,8 +34,8 @@ void cat(int client,FILE*resource)
     fgets(buf,sizeof(buf),resource);
     while(!feof(resource))
     {
-	send(client,buf,strlen(buf),0);
-	fgets(buf,sizeof(buf),resource);
+        send(client,buf,strlen(buf),0);
+        fgets(buf,sizeof(buf),resource);
     }
 }
 void headers(int client,const char *filename)
@@ -60,14 +60,14 @@ void serve_file(int client,const char*filename)
     int numchars=1;
     char buf[1024];
     buf[0]='A';buf[1]='\0';
-    while((numchars>0)&&strcmp("\n",buf));
-	numchars=get_line(client,buf,sizeof(buf));
+//    while((numchars>0)&&strcmp("\n",buf));
+//        numchars=get_line(client,buf,sizeof(buf));
     resource=fopen(filename,"r");
     if(resource==NULL)
-	not_found(client);
+        not_found(client);
     else{
-	headers(client,filename);
-	cat(client,resource);
+        headers(client,filename);
+        cat(client,resource);
     }
     fclose(resource);
 }
@@ -265,6 +265,7 @@ void *accept_request_test(void*from_client)
     printf("len:%d\n",len);
     printf("%s",buf); 
     close(client);
+    return NULL;
 }
 
 //打印错误信息，并退出
@@ -306,8 +307,12 @@ int startup(int*port)
 
 int main()
 {
+//    struct stat st;
+//    char buff[1024];
+//    char*p=getcwd(buff, 1024);
+//    int s1=stat("./htdocs/index.html", &st);
     int server_sock=-1;
-    int port=4000;
+    int port=0;
     int client_sock=-1;
     struct sockaddr_in client_name;
     socklen_t client_name_len=sizeof(client_name);
@@ -316,11 +321,12 @@ int main()
     printf("httpd running on port %d\n",port);
     while(1)
     {
-	client_sock=accept(server_sock,(struct sockaddr*)&client_name,&client_name_len);
-	if(client_sock==-1)
-	    error_die("accpet");
-	if(pthread_create(&newthread,NULL,accept_request,(void*)&client_sock)!=0)
-	    perror("pthread_create");	
+    client_sock=accept(server_sock,(struct sockaddr*)&client_name,&client_name_len);
+    if(client_sock==-1)
+        error_die("accpet");
+    if(pthread_create(&newthread,NULL,accept_request,(void*)&client_sock)!=0)
+        perror("pthread_create");
     }
+    
     return 0;
 }
