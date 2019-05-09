@@ -42,9 +42,10 @@ void cat(int client,FILE*resource)
 void headers(int client,const char *filename)
 {
     char buf[1024];
+    printf("client in headers is:%d\n",client);
     strcpy(buf,"HTTP/1.0 200 OK\r\n");
-    send(client,buf,strlen(buf),0);
-    
+    int i=send(client,buf,strlen(buf),0);
+    printf("send result:%d\n",i);
     strcpy(buf,"SERVER_STRING");
     send(client,buf,strlen(buf),0);
     
@@ -324,6 +325,7 @@ int main()
     while(1)
     {
 	client_sock=accept(server_sock,(struct sockaddr*)&client_name,&client_name_len);
+	printf("client_sock in main is:%d\n",client_sock);
 	if(client_sock==-1)
 	    error_die("accpet");
 	if(pthread_create(&newthread,NULL,accept_request,(void*)&client_sock)!=0)
