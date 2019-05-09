@@ -37,6 +37,7 @@ void cat(int client,FILE*resource)
         send(client,buf,strlen(buf),0);
         fgets(buf,sizeof(buf),resource);
     }
+    printf("send file complete\n");
 }
 void headers(int client,const char *filename)
 {
@@ -47,12 +48,12 @@ void headers(int client,const char *filename)
     strcpy(buf,"SERVER_STRING");
     send(client,buf,strlen(buf),0);
     
-    strcpy(buf,"Content-Type:text/html\r\n");
+    strcpy(buf,"Content-Type: text/html\r\n");
     send(client,buf,strlen(buf),0);
     
     strcpy(buf,"\r\n");
     send(client,buf,strlen(buf),0);
-    
+    printf("send headers complete\n");  
 }
 void serve_file(int client,const char*filename)
 {
@@ -60,8 +61,9 @@ void serve_file(int client,const char*filename)
     int numchars=1;
     char buf[1024];
     buf[0]='A';buf[1]='\0';
-//    while((numchars>0)&&strcmp("\n",buf));
-//        numchars=get_line(client,buf,sizeof(buf));
+    while(numchars>0)
+    	numchars=get_line(client,buf,sizeof(buf));
+    
     resource=fopen(filename,"r");
     if(resource==NULL)
         not_found(client);
@@ -321,11 +323,11 @@ int main()
     printf("httpd running on port %d\n",port);
     while(1)
     {
-    client_sock=accept(server_sock,(struct sockaddr*)&client_name,&client_name_len);
-    if(client_sock==-1)
-        error_die("accpet");
-    if(pthread_create(&newthread,NULL,accept_request,(void*)&client_sock)!=0)
-        perror("pthread_create");
+	client_sock=accept(server_sock,(struct sockaddr*)&client_name,&client_name_len);
+	if(client_sock==-1)
+	    error_die("accpet");
+	if(pthread_create(&newthread,NULL,accept_request,(void*)&client_sock)!=0)
+	    perror("pthread_create");
     }
     
     return 0;
