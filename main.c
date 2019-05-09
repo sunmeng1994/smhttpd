@@ -37,15 +37,12 @@ void cat(int client,FILE*resource)
         send(client,buf,strlen(buf),0);
         fgets(buf,sizeof(buf),resource);
     }
-    printf("send file complete\n");
 }
 void headers(int client,const char *filename)
 {
     char buf[1024];
-    printf("client in headers is:%d\n",client);
     strcpy(buf,"HTTP/1.0 200 OK\r\n");
     int i=send(client,buf,strlen(buf),0);
-    printf("send result:%d\n",i);
     strcpy(buf,"SERVER_STRING");
     send(client,buf,strlen(buf),0);
     
@@ -54,7 +51,6 @@ void headers(int client,const char *filename)
     
     strcpy(buf,"\r\n");
     send(client,buf,strlen(buf),0);
-    printf("send headers complete\n");  
 }
 void serve_file(int client,const char*filename)
 {
@@ -184,7 +180,8 @@ int get_line(int sock,char*buf,int size)
 //接收客户端的连接
 void*accept_request(void*from_client)
 {
-    int client=*(int*)from_client;
+    int client=(intptr_t)from_client;
+    printf("client in accept_reque is %d\n",client);
     char buf[1024];
     int numchars;
     char method[255];
@@ -328,7 +325,7 @@ int main()
 	printf("client_sock in main is:%d\n",client_sock);
 	if(client_sock==-1)
 	    error_die("accpet");
-	if(pthread_create(&newthread,NULL,accept_request,(void*)&client_sock)!=0)
+	if(pthread_create(&newthread,NULL,accept_request,(void*)(intptr_t)client_sock)!=0)
 	    perror("pthread_create");
     }
     
