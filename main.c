@@ -16,7 +16,7 @@
 #define SERVER_STRING "Server:smhttpd/0.1.0\r\n"
 int startup(int*port);
 int error_die(const char*sc);
-void*accept_request(void*from_client);
+void accept_request(void*from_client);
 int get_line(int sock,char*buf,int size);
 void unimplemented(int client);
 void cannot_execute(int client);
@@ -52,7 +52,7 @@ void headers(int client,const char *filename)
     strcpy(buf,"\r\n");
     send(client,buf,strlen(buf),0);
     
-    int i=0;
+    int fuck=0;
 }
 void serve_file(int client,const char*filename)
 {
@@ -180,7 +180,7 @@ int get_line(int sock,char*buf,int size)
 }
 
 //接收客户端的连接
-void*accept_request(void*from_client)
+void accept_request(void*from_client)
 {
     int client=(intptr_t)from_client;
     char buf[1024];
@@ -255,7 +255,6 @@ void*accept_request(void*from_client)
 	    execute_cgi(client,path,method,query_string);
     }
     close(client);
-    return NULL;
 }
 
 void *accept_request_test(void*from_client)
@@ -326,7 +325,7 @@ int main()
 	printf("client_sock in main is:%d\n",client_sock);
 	if(client_sock==-1)
 	    error_die("accpet");
-	if(pthread_create(&newthread,NULL,accept_request,(void*)(intptr_t)client_sock)!=0)
+	if(pthread_create(&newthread,NULL,(void*)accept_request,(void*)(intptr_t)client_sock)!=0)
 	    perror("pthread_create");
     }
     
