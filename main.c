@@ -309,27 +309,29 @@ int startup(int*port)
 
 int main()
 {
-//    struct stat st;
-//    char buff[1024];
-//    char*p=getcwd(buff, 1024);
-//    int s1=stat("./htdocs/index.html", &st);
-    int server_sock=-1;
-    int port=0;
-    int client_sock=-1;
+    int server_sock = -1;
+    u_short port = 4000;
+    int client_sock = -1;
     struct sockaddr_in client_name;
-    socklen_t client_name_len=sizeof(client_name);
+    socklen_t  client_name_len = sizeof(client_name);
     pthread_t newthread;
-    server_sock=startup(&port);
-    printf("httpd running on port %d\n",port);
-    while(1)
+
+    server_sock = startup(&port);
+    printf("httpd running on port %d\n", port);
+
+    while (1)
     {
-	client_sock=accept(server_sock,(struct sockaddr*)&client_name,&client_name_len);
-	printf("client_sock in main is:%d\n",client_sock);
-	if(client_sock==-1)
-	    error_die("accpet");
-	if(pthread_create(&newthread,NULL,(void*)accept_request,(void*)(intptr_t)client_sock)!=0)
-	    perror("pthread_create");
+        client_sock = accept(server_sock,
+                (struct sockaddr *)&client_name,
+                &client_name_len);
+        if (client_sock == -1)
+            error_die("accept");
+        /* accept_request(&client_sock); */
+        if (pthread_create(&newthread , NULL, (void *)accept_request, (void *)(intptr_t)client_sock) != 0)
+            perror("pthread_create");
     }
+
+    close(server_sock);
     
     return 0;
 }
