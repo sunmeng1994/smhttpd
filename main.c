@@ -43,7 +43,7 @@ void headers(int client,const char *filename)
     char buf[1024];
     strcpy(buf,"HTTP/1.0 200 OK\r\n");
     int i=send(client,buf,strlen(buf),0);
-    strcpy(buf,"SERVER_STRING");
+    strcpy(buf,SERVER_STRING);
     send(client,buf,strlen(buf),0);
     
     strcpy(buf,"Content-Type: text/html\r\n");
@@ -51,6 +51,8 @@ void headers(int client,const char *filename)
     
     strcpy(buf,"\r\n");
     send(client,buf,strlen(buf),0);
+    
+    int i=0;
 }
 void serve_file(int client,const char*filename)
 {
@@ -181,7 +183,6 @@ int get_line(int sock,char*buf,int size)
 void*accept_request(void*from_client)
 {
     int client=(intptr_t)from_client;
-    printf("client in accept_reque is %d\n",client);
     char buf[1024];
     int numchars;
     char method[255];
