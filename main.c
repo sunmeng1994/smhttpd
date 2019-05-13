@@ -54,19 +54,21 @@ void headers(int client,const char *filename)
 }
 void serve_file(int client,const char*filename)
 {
-    FILE*resource =NULL;
-    int numchars=1;
+    FILE *resource = NULL;
+    int numchars = 1;
     char buf[1024];
-    buf[0]='A';buf[1]='\0';
-    while(numchars>0)
-    	numchars=get_line(client,buf,sizeof(buf));
-    
-    resource=fopen(filename,"r");
-    if(resource==NULL)
+
+    buf[0] = 'A'; buf[1] = '\0';
+    while ((numchars > 0) && strcmp("\n", buf))  /* read & discard headers */
+        numchars = get_line(client, buf, sizeof(buf));
+
+    resource = fopen(filename, "r");
+    if (resource == NULL)
         not_found(client);
-    else{
-        headers(client,filename);
-        cat(client,resource);
+    else
+    {
+        headers(client, filename);
+        cat(client, resource);
     }
     fclose(resource);
 }
